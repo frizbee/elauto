@@ -514,7 +514,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   }
 
   int? _parseMileageInKm() {
-    final rawMileage = double.tryParse(_mileageController.text.trim());
+    final rawMileage = int.tryParse(_mileageController.text.trim());
 
     if (rawMileage == null || rawMileage <= 0) {
       return null;
@@ -524,7 +524,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
       return (rawMileage * 1.60934).round();
     }
 
-    return rawMileage.round();
+    return rawMileage;
   }
 
   String? _validateYear() {
@@ -548,7 +548,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   }
 
   String? _validateMileage() {
-    final rawMileage = double.tryParse(_mileageController.text.trim());
+    final rawMileage = int.tryParse(_mileageController.text.trim());
 
     if (rawMileage == null) {
       return 'Enter current mileage';
@@ -749,6 +749,7 @@ class _VehicleDetailsStep extends StatelessWidget {
         TextField(
           controller: yearController,
           keyboardType: TextInputType.number,
+          textInputAction: TextInputAction.next,
           inputFormatters: [
             FilteringTextInputFormatter.digitsOnly,
             LengthLimitingTextInputFormatter(4),
@@ -773,9 +774,9 @@ class _VehicleDetailsStep extends StatelessWidget {
             Expanded(
               child: TextField(
                 controller: mileageController,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
+                keyboardType: TextInputType.number,
+                textInputAction: TextInputAction.done,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 onChanged: onMileageChanged,
                 decoration: InputDecoration(
                   hintText: 'Enter mileage',
@@ -819,9 +820,7 @@ class _VehicleIdentificationStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final identificationLabel = selectedType?.code == 'car'
-        ? 'VIN'
-        : 'Frame number';
+    const identificationLabel = 'VIN';
 
     return ListView(
       children: [
@@ -845,9 +844,7 @@ class _VehicleIdentificationStep extends StatelessWidget {
           controller: identificationController,
           decoration: InputDecoration(
             labelText: '$identificationLabel (optional)',
-            hintText: selectedType?.code == 'car'
-                ? 'Enter VIN'
-                : 'Enter frame number',
+            hintText: 'Enter VIN',
           ),
         ),
         const SizedBox(height: AppSpacing.lg),
@@ -925,8 +922,9 @@ class _VehiclePersonalizationStep extends StatelessWidget {
         Text('Color', style: Theme.of(context).textTheme.titleSmall),
         const SizedBox(height: AppSpacing.sm),
         Wrap(
+          alignment: WrapAlignment.center,
           spacing: AppSpacing.sm,
-          runSpacing: AppSpacing.sm,
+          runSpacing: AppSpacing.xs,
           children: kVehicleColorOptions
               .map(
                 (colorOption) => _VehicleColorChip(
@@ -960,8 +958,8 @@ class _VehicleColorChip extends StatelessWidget {
       borderRadius: BorderRadius.circular(AppRadius.full),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
-        width: 78,
-        padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+        width: 68,
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
         decoration: BoxDecoration(
           color: isSelected ? AppColors.accentSoft : Colors.transparent,
           borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -978,10 +976,6 @@ class _VehicleColorChip extends StatelessWidget {
               decoration: BoxDecoration(
                 color: colorOption.color,
                 shape: BoxShape.circle,
-                border: Border.all(
-                  color: isSelected ? AppColors.textPrimary : AppColors.border,
-                  width: isSelected ? 2 : 1,
-                ),
               ),
             ),
             const SizedBox(height: AppSpacing.xs),
