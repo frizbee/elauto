@@ -28,6 +28,8 @@ class VehicleProfiles extends Table {
 
   IntColumn get currentOdometerKm => integer().withDefault(const Constant(0))();
 
+  TextColumn get odometerUnit => text().withDefault(const Constant('km'))();
+
   DateTimeColumn get createdAt =>
       dateTime().clientDefault(() => DateTime.now())();
 

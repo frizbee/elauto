@@ -30,7 +30,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -49,7 +49,7 @@ class AppDatabase extends _$AppDatabase {
         await _seedVehicleCatalog();
       }
 
-      if (from < 3) {
+      if (from >= 2 && from < 3) {
         await customStatement(
           'ALTER TABLE cehicle_types RENAME TO vehicle_types',
         );
@@ -68,6 +68,10 @@ class AppDatabase extends _$AppDatabase {
         await customStatement(
           'ALTER TABLE vehicle_profiles RENAME COLUMN vehicel_model_id TO vehicle_model_id',
         );
+      }
+
+      if (from < 4) {
+        await migrator.addColumn(vehicleProfiles, vehicleProfiles.odometerUnit);
       }
     },
   );
@@ -157,12 +161,18 @@ class AppDatabase extends _$AppDatabase {
     required int vehicleTypeId,
     required int vehicleBrandId,
     required int vehicleModelId,
+    required int year,
+    required int currentOdometerKm,
+    required String odometerUnit,
   }) {
     return into(vehicleProfiles).insert(
       VehicleProfilesCompanion.insert(
         vehicleTypeId: vehicleTypeId,
         vehicleBrandId: vehicleBrandId,
         vehicleModelId: vehicleModelId,
+        year: Value(year),
+        currentOdometerKm: Value(currentOdometerKm),
+        odometerUnit: Value(odometerUnit),
       ),
     );
   }

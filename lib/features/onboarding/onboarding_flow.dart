@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../data/local/app_database.dart';
+import '../../theme/app_theme.dart';
 
 class OnboardingFlow extends StatefulWidget {
   const OnboardingFlow({
@@ -25,11 +26,23 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   VehicleType? _selectedType;
   VehicleBrand? _selectedBrand;
   VehicleModel? _selectedModel;
+  final TextEditingController _yearController = TextEditingController();
+  final TextEditingController _mileageController = TextEditingController();
+  String _odometerUnit = 'km';
+  String? _yearErrorText;
+  String? _mileageErrorText;
 
   @override
   void initState() {
     super.initState();
     _loadVehicleTypes();
+  }
+
+  @override
+  void dispose() {
+    _yearController.dispose();
+    _mileageController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadVehicleTypes() async {
@@ -147,13 +160,39 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
       return;
     }
 
+    if (_currentStep == 1) {
+      final selectedBrand = _selectedBrand;
+      final selectedModel = _selectedModel;
+
+      if (selectedBrand == null || selectedModel == null) {
+        return;
+      }
+
+      setState(() {
+        _currentStep = 2;
+      });
+      return;
+    }
+
     final selectedType = _selectedType;
     final selectedBrand = _selectedBrand;
     final selectedModel = _selectedModel;
+    final year = _parseYear();
+    final currentOdometerKm = _parseMileageInKm();
+
+    final yearError = _validateYear();
+    final mileageError = _validateMileage();
+
+    setState(() {
+      _yearErrorText = yearError;
+      _mileageErrorText = mileageError;
+    });
 
     if (selectedType == null ||
         selectedBrand == null ||
-        selectedModel == null) {
+        selectedModel == null ||
+        year == null ||
+        currentOdometerKm == null) {
       return;
     }
 
@@ -165,6 +204,9 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
       vehicleTypeId: selectedType.id,
       vehicleBrandId: selectedBrand.id,
       vehicleModelId: selectedModel.id,
+      year: year,
+      currentOdometerKm: currentOdometerKm,
+      odometerUnit: _odometerUnit,
     );
 
     if (!mounted) {
@@ -189,16 +231,12 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                   children: [
                     const SizedBox(height: 16),
                     Text(
-                      _currentStep == 0
-                          ? 'What do you want to track?'
-                          : 'Choose your vehicle',
+                      _titleForStep(),
                       style: theme.textTheme.headlineMedium,
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      _currentStep == 0
-                          ? 'Select the vehicle type to start your setup.'
-                          : 'Pick the brand and model. Add a new one if it is missing.',
+                      _subtitleForStep(),
                       style: theme.textTheme.bodyLarge?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
@@ -220,7 +258,8 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                                   });
                                 },
                               )
-                            : _VehicleCatalogStep(
+                            : _currentStep == 1
+                            ? _VehicleCatalogStep(
                                 key: const ValueKey('vehicle-catalog-step'),
                                 selectedType: _selectedType,
                                 selectedBrand: _selectedBrand,
@@ -232,6 +271,40 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                                 },
                                 onPickBrand: _pickBrand,
                                 onPickModel: _pickModel,
+                              )
+                            : _VehicleDetailsStep(
+                                key: const ValueKey('vehicle-details-step'),
+                                selectedBrand: _selectedBrand,
+                                selectedModel: _selectedModel,
+                                yearController: _yearController,
+                                mileageController: _mileageController,
+                                selectedUnit: _odometerUnit,
+                                yearErrorText: _yearErrorText,
+                                mileageErrorText: _mileageErrorText,
+                                onBack: () {
+                                  setState(() {
+                                    _currentStep = 1;
+                                  });
+                                },
+                                onUnitChanged: (unit) {
+                                  setState(() {
+                                    _odometerUnit = unit;
+                                  });
+                                },
+                                onYearChanged: (_) {
+                                  if (_yearErrorText != null) {
+                                    setState(() {
+                                      _yearErrorText = null;
+                                    });
+                                  }
+                                },
+                                onMileageChanged: (_) {
+                                  if (_mileageErrorText != null) {
+                                    setState(() {
+                                      _mileageErrorText = null;
+                                    });
+                                  }
+                                },
                               ),
                       ),
                     ),
@@ -239,7 +312,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: List.generate(
-                        2,
+                        3,
                         (index) => AnimatedContainer(
                           duration: const Duration(milliseconds: 200),
                           margin: const EdgeInsets.symmetric(horizontal: 4),
@@ -248,7 +321,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                           decoration: BoxDecoration(
                             color: _currentStep == index
                                 ? theme.colorScheme.primary
-                                : theme.colorScheme.outlineVariant,
+                                : AppColors.border,
                             borderRadius: BorderRadius.circular(999),
                           ),
                         ),
@@ -271,7 +344,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                                     strokeWidth: 2,
                                   ),
                                 )
-                              : Text(_currentStep == 0 ? 'Next' : 'Finish'),
+                              : Text(_currentStep < 2 ? 'Next' : 'Finish'),
                         ),
                       ),
                     ),
@@ -287,7 +360,84 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
       return _selectedType != null;
     }
 
-    return _selectedBrand != null && _selectedModel != null;
+    if (_currentStep == 1) {
+      return _selectedBrand != null && _selectedModel != null;
+    }
+
+    return _validateYear() == null && _validateMileage() == null;
+  }
+
+  String _titleForStep() {
+    switch (_currentStep) {
+      case 0:
+        return 'What do you want to track?';
+      case 1:
+        return 'Choose your vehicle';
+      case 2:
+        return 'Add current details';
+    }
+
+    return 'Onboarding';
+  }
+
+  String _subtitleForStep() {
+    switch (_currentStep) {
+      case 0:
+        return 'Select the vehicle type to start your setup.';
+      case 1:
+        return 'Pick the brand and model. Add a new one if it is missing.';
+      case 2:
+        return 'Set the year, current mileage, and unit for this vehicle.';
+    }
+
+    return '';
+  }
+
+  int? _parseYear() {
+    return int.tryParse(_yearController.text.trim());
+  }
+
+  int? _parseMileageInKm() {
+    final rawMileage = double.tryParse(_mileageController.text.trim());
+
+    if (rawMileage == null || rawMileage <= 0) {
+      return null;
+    }
+
+    if (_odometerUnit == 'miles') {
+      return (rawMileage * 1.60934).round();
+    }
+
+    return rawMileage.round();
+  }
+
+  String? _validateYear() {
+    final year = _parseYear();
+
+    if (year == null) {
+      return 'Enter a valid year';
+    }
+
+    final latestYear = DateTime.now().year + 1;
+    if (year < 1886 || year > latestYear) {
+      return 'Year must be between 1886 and $latestYear';
+    }
+
+    return null;
+  }
+
+  String? _validateMileage() {
+    final rawMileage = double.tryParse(_mileageController.text.trim());
+
+    if (rawMileage == null) {
+      return 'Enter current mileage';
+    }
+
+    if (rawMileage <= 0) {
+      return 'Mileage must be greater than 0';
+    }
+
+    return null;
   }
 }
 
@@ -313,19 +463,22 @@ class _VehicleTypeStep extends StatelessWidget {
         final isSelected = selectedType?.id == type.id;
 
         return Card(
-          color: isSelected
-              ? Theme.of(context).colorScheme.primaryContainer
-              : null,
+          color: isSelected ? AppColors.accentSoft : AppColors.card,
           child: InkWell(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             onTap: () => onSelected(type),
             child: Padding(
-              padding: const EdgeInsets.all(18),
+              padding: const EdgeInsets.all(AppSpacing.lg),
               child: Row(
                 children: [
                   CircleAvatar(
-                    backgroundColor: Theme.of(context).colorScheme.surface,
-                    child: Icon(_iconForType(type.code)),
+                    backgroundColor: isSelected
+                        ? Colors.white
+                        : AppColors.backgroundSoft,
+                    child: Icon(
+                      _iconForType(type.code),
+                      color: AppColors.textPrimary,
+                    ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -335,10 +488,7 @@ class _VehicleTypeStep extends StatelessWidget {
                     ),
                   ),
                   if (isSelected)
-                    Icon(
-                      Icons.check_circle,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
+                    Icon(Icons.check_circle, color: AppColors.accent),
                 ],
               ),
             ),
@@ -386,6 +536,10 @@ class _VehicleCatalogStep extends StatelessWidget {
       children: [
         TextButton.icon(
           onPressed: onBack,
+          style: TextButton.styleFrom(
+            foregroundColor: AppColors.textPrimary,
+            padding: EdgeInsets.zero,
+          ),
           icon: const Icon(Icons.arrow_back),
           label: const Text('Back'),
         ),
@@ -406,6 +560,104 @@ class _VehicleCatalogStep extends StatelessWidget {
               ? 'Select a brand first'
               : 'Search and select model',
           onTap: selectedBrand == null ? null : onPickModel,
+        ),
+      ],
+    );
+  }
+}
+
+class _VehicleDetailsStep extends StatelessWidget {
+  const _VehicleDetailsStep({
+    super.key,
+    required this.selectedBrand,
+    required this.selectedModel,
+    required this.yearController,
+    required this.mileageController,
+    required this.selectedUnit,
+    required this.yearErrorText,
+    required this.mileageErrorText,
+    required this.onBack,
+    required this.onUnitChanged,
+    required this.onYearChanged,
+    required this.onMileageChanged,
+  });
+
+  final VehicleBrand? selectedBrand;
+  final VehicleModel? selectedModel;
+  final TextEditingController yearController;
+  final TextEditingController mileageController;
+  final String selectedUnit;
+  final String? yearErrorText;
+  final String? mileageErrorText;
+  final VoidCallback onBack;
+  final ValueChanged<String> onUnitChanged;
+  final ValueChanged<String> onYearChanged;
+  final ValueChanged<String> onMileageChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      children: [
+        TextButton.icon(
+          onPressed: onBack,
+          style: TextButton.styleFrom(
+            foregroundColor: AppColors.textPrimary,
+            padding: EdgeInsets.zero,
+          ),
+          icon: const Icon(Icons.arrow_back),
+          label: const Text('Back'),
+        ),
+        const SizedBox(height: AppSpacing.xs),
+        Chip(
+          label: Text(
+            '${selectedBrand?.name ?? ''} ${selectedModel?.name ?? ''}'.trim(),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.xl),
+        TextField(
+          controller: yearController,
+          keyboardType: TextInputType.number,
+          onChanged: onYearChanged,
+          decoration: InputDecoration(
+            labelText: 'Year ⭐️',
+            hintText: 'e.g. 2022',
+            errorText: yearErrorText,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.lg),
+        Text(
+          'Current mileage ⭐️',
+          style: Theme.of(context).textTheme.titleSmall,
+        ),
+        const SizedBox(height: AppSpacing.xs),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: TextField(
+                controller: mileageController,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                onChanged: onMileageChanged,
+                decoration: InputDecoration(
+                  hintText: 'Enter mileage',
+                  errorText: mileageErrorText,
+                ),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            SegmentedButton<String>(
+              segments: const [
+                ButtonSegment(value: 'km', label: Text('km')),
+                ButtonSegment(value: 'miles', label: Text('miles')),
+              ],
+              selected: {selectedUnit},
+              onSelectionChanged: (selection) {
+                onUnitChanged(selection.first);
+              },
+            ),
+          ],
         ),
       ],
     );
@@ -433,17 +685,19 @@ class _SelectionField extends StatelessWidget {
         Text(label, style: Theme.of(context).textTheme.titleSmall),
         const SizedBox(height: 8),
         InkWell(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadius.md),
           onTap: onTap,
           child: InputDecorator(
             decoration: InputDecoration(
               hintText: hintText,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
               suffixIcon: const Icon(Icons.expand_more),
             ),
-            child: Text(value ?? hintText),
+            child: Text(
+              value ?? hintText,
+              style: value == null
+                  ? Theme.of(context).textTheme.bodyMedium
+                  : Theme.of(context).textTheme.bodyLarge,
+            ),
           ),
         ),
       ],
@@ -545,7 +799,6 @@ class _SearchPickerSheetState<T> extends State<_SearchPickerSheet<T>> {
             decoration: const InputDecoration(
               hintText: 'Search',
               prefixIcon: Icon(Icons.search),
-              border: OutlineInputBorder(),
             ),
           ),
           const SizedBox(height: 16),

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'data/local/app_database.dart';
 import 'features/dashboard/dashboard_screen.dart';
 import 'features/onboarding/onboarding_flow.dart';
+import 'theme/app_theme.dart';
 
 void main() {
   runApp(const RepackApp());
@@ -13,20 +14,10 @@ class RepackApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const splashBackgroundColor = Color(0xFFF7F7F7);
-    const brandOrange = Color(0xFFFF7A00);
-
     return MaterialApp(
       title: 'Repack',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: brandOrange,
-          surface: splashBackgroundColor,
-        ),
-        scaffoldBackgroundColor: splashBackgroundColor,
-        useMaterial3: true,
-      ),
+      theme: AppTheme.light(),
       home: const AppStartupGate(),
     );
   }
