@@ -75,9 +75,19 @@ class DashboardScreen extends StatelessWidget {
                           if ((vehicle.profile.vehicleColor ?? '')
                               .isNotEmpty) ...[
                             const SizedBox(height: AppSpacing.xs),
-                            Text(
-                              'Color: ${vehicle.profile.vehicleColor}',
-                              style: Theme.of(context).textTheme.bodyMedium,
+                            Row(
+                              children: [
+                                _ColorSwatch(
+                                  color: _vehicleColorFromName(
+                                    vehicle.profile.vehicleColor!,
+                                  ),
+                                ),
+                                const SizedBox(width: AppSpacing.xs),
+                                Text(
+                                  'Color: ${_vehicleColorLabel(vehicle.profile.vehicleColor!)}',
+                                  style: Theme.of(context).textTheme.bodyMedium,
+                                ),
+                              ],
                             ),
                           ],
                           if ((vehicle.profile.vin ?? '').isNotEmpty) ...[
@@ -115,5 +125,88 @@ class DashboardScreen extends StatelessWidget {
     }
 
     return '$currentOdometerKm km';
+  }
+
+  Color _vehicleColorFromName(String colorName) {
+    if (colorName.startsWith('#') && colorName.length == 7) {
+      final hex = colorName.substring(1);
+      return Color(int.parse('FF$hex', radix: 16));
+    }
+
+    switch (colorName.toLowerCase()) {
+      case 'white':
+        return const Color(0xFFF8FAFC);
+      case 'black':
+        return const Color(0xFF111111);
+      case 'silver':
+        return const Color(0xFFC0C7D1);
+      case 'gray':
+        return const Color(0xFF6B7280);
+      case 'blue':
+        return const Color(0xFF2563EB);
+      case 'red':
+        return const Color(0xFFDC2626);
+      case 'green':
+        return const Color(0xFF2F855A);
+      case 'brown':
+        return const Color(0xFF8B5E3C);
+      case 'beige':
+        return const Color(0xFFD6C6A5);
+      case 'orange':
+        return const Color(0xFFFF6A00);
+      case 'yellow':
+        return const Color(0xFFF59E0B);
+      default:
+        return AppColors.border;
+    }
+  }
+
+  String _vehicleColorLabel(String storedValue) {
+    if (!storedValue.startsWith('#')) {
+      return storedValue;
+    }
+
+    final hsv = HSVColor.fromColor(_vehicleColorFromName(storedValue));
+    final hue = hsv.hue;
+
+    if (hue < 20 || hue >= 340) {
+      return 'Red';
+    }
+    if (hue < 45) {
+      return 'Orange';
+    }
+    if (hue < 65) {
+      return 'Yellow';
+    }
+    if (hue < 170) {
+      return 'Green';
+    }
+    if (hue < 255) {
+      return 'Blue';
+    }
+    if (hue < 300) {
+      return 'Purple';
+    }
+
+    return 'Pink';
+  }
+}
+
+class _ColorSwatch extends StatelessWidget {
+  const _ColorSwatch({required this.color});
+
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 14,
+      height: 14,
+      decoration: BoxDecoration(
+        color: color,
+        shape: BoxShape.circle,
+        border: Border.all(color: AppColors.border),
+      ),
+    );
   }
 }
