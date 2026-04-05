@@ -26,6 +26,8 @@ class VehicleProfiles extends Table {
 
   TextColumn get vin => text().nullable()();
 
+  TextColumn get plateNumber => text().nullable()();
+
   IntColumn get currentOdometerKm => integer().withDefault(const Constant(0))();
 
   TextColumn get odometerUnit => text().withDefault(const Constant('km'))();

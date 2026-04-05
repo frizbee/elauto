@@ -1284,6 +1284,17 @@ class $VehicleProfilesTable extends VehicleProfiles
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _plateNumberMeta = const VerificationMeta(
+    'plateNumber',
+  );
+  @override
+  late final GeneratedColumn<String> plateNumber = GeneratedColumn<String>(
+    'plate_number',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _currentOdometerKmMeta = const VerificationMeta(
     'currentOdometerKm',
   );
@@ -1343,6 +1354,7 @@ class $VehicleProfilesTable extends VehicleProfiles
     year,
     nickname,
     vin,
+    plateNumber,
     currentOdometerKm,
     odometerUnit,
     createdAt,
@@ -1429,6 +1441,15 @@ class $VehicleProfilesTable extends VehicleProfiles
         vin.isAcceptableOrUnknown(data['vin']!, _vinMeta),
       );
     }
+    if (data.containsKey('plate_number')) {
+      context.handle(
+        _plateNumberMeta,
+        plateNumber.isAcceptableOrUnknown(
+          data['plate_number']!,
+          _plateNumberMeta,
+        ),
+      );
+    }
     if (data.containsKey('current_odometer_km')) {
       context.handle(
         _currentOdometerKmMeta,
@@ -1504,6 +1525,10 @@ class $VehicleProfilesTable extends VehicleProfiles
         DriftSqlType.string,
         data['${effectivePrefix}vin'],
       ),
+      plateNumber: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}plate_number'],
+      ),
       currentOdometerKm: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}current_odometer_km'],
@@ -1539,6 +1564,7 @@ class VehicleProfile extends DataClass implements Insertable<VehicleProfile> {
   final int? year;
   final String? nickname;
   final String? vin;
+  final String? plateNumber;
   final int currentOdometerKm;
   final String odometerUnit;
   final DateTime createdAt;
@@ -1553,6 +1579,7 @@ class VehicleProfile extends DataClass implements Insertable<VehicleProfile> {
     this.year,
     this.nickname,
     this.vin,
+    this.plateNumber,
     required this.currentOdometerKm,
     required this.odometerUnit,
     required this.createdAt,
@@ -1580,6 +1607,9 @@ class VehicleProfile extends DataClass implements Insertable<VehicleProfile> {
     if (!nullToAbsent || vin != null) {
       map['vin'] = Variable<String>(vin);
     }
+    if (!nullToAbsent || plateNumber != null) {
+      map['plate_number'] = Variable<String>(plateNumber);
+    }
     map['current_odometer_km'] = Variable<int>(currentOdometerKm);
     map['odometer_unit'] = Variable<String>(odometerUnit);
     map['created_at'] = Variable<DateTime>(createdAt);
@@ -1604,6 +1634,9 @@ class VehicleProfile extends DataClass implements Insertable<VehicleProfile> {
           ? const Value.absent()
           : Value(nickname),
       vin: vin == null && nullToAbsent ? const Value.absent() : Value(vin),
+      plateNumber: plateNumber == null && nullToAbsent
+          ? const Value.absent()
+          : Value(plateNumber),
       currentOdometerKm: Value(currentOdometerKm),
       odometerUnit: Value(odometerUnit),
       createdAt: Value(createdAt),
@@ -1626,6 +1659,7 @@ class VehicleProfile extends DataClass implements Insertable<VehicleProfile> {
       year: serializer.fromJson<int?>(json['year']),
       nickname: serializer.fromJson<String?>(json['nickname']),
       vin: serializer.fromJson<String?>(json['vin']),
+      plateNumber: serializer.fromJson<String?>(json['plateNumber']),
       currentOdometerKm: serializer.fromJson<int>(json['currentOdometerKm']),
       odometerUnit: serializer.fromJson<String>(json['odometerUnit']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
@@ -1645,6 +1679,7 @@ class VehicleProfile extends DataClass implements Insertable<VehicleProfile> {
       'year': serializer.toJson<int?>(year),
       'nickname': serializer.toJson<String?>(nickname),
       'vin': serializer.toJson<String?>(vin),
+      'plateNumber': serializer.toJson<String?>(plateNumber),
       'currentOdometerKm': serializer.toJson<int>(currentOdometerKm),
       'odometerUnit': serializer.toJson<String>(odometerUnit),
       'createdAt': serializer.toJson<DateTime>(createdAt),
@@ -1662,6 +1697,7 @@ class VehicleProfile extends DataClass implements Insertable<VehicleProfile> {
     Value<int?> year = const Value.absent(),
     Value<String?> nickname = const Value.absent(),
     Value<String?> vin = const Value.absent(),
+    Value<String?> plateNumber = const Value.absent(),
     int? currentOdometerKm,
     String? odometerUnit,
     DateTime? createdAt,
@@ -1678,6 +1714,7 @@ class VehicleProfile extends DataClass implements Insertable<VehicleProfile> {
     year: year.present ? year.value : this.year,
     nickname: nickname.present ? nickname.value : this.nickname,
     vin: vin.present ? vin.value : this.vin,
+    plateNumber: plateNumber.present ? plateNumber.value : this.plateNumber,
     currentOdometerKm: currentOdometerKm ?? this.currentOdometerKm,
     odometerUnit: odometerUnit ?? this.odometerUnit,
     createdAt: createdAt ?? this.createdAt,
@@ -1704,6 +1741,9 @@ class VehicleProfile extends DataClass implements Insertable<VehicleProfile> {
       year: data.year.present ? data.year.value : this.year,
       nickname: data.nickname.present ? data.nickname.value : this.nickname,
       vin: data.vin.present ? data.vin.value : this.vin,
+      plateNumber: data.plateNumber.present
+          ? data.plateNumber.value
+          : this.plateNumber,
       currentOdometerKm: data.currentOdometerKm.present
           ? data.currentOdometerKm.value
           : this.currentOdometerKm,
@@ -1727,6 +1767,7 @@ class VehicleProfile extends DataClass implements Insertable<VehicleProfile> {
           ..write('year: $year, ')
           ..write('nickname: $nickname, ')
           ..write('vin: $vin, ')
+          ..write('plateNumber: $plateNumber, ')
           ..write('currentOdometerKm: $currentOdometerKm, ')
           ..write('odometerUnit: $odometerUnit, ')
           ..write('createdAt: $createdAt, ')
@@ -1746,6 +1787,7 @@ class VehicleProfile extends DataClass implements Insertable<VehicleProfile> {
     year,
     nickname,
     vin,
+    plateNumber,
     currentOdometerKm,
     odometerUnit,
     createdAt,
@@ -1764,6 +1806,7 @@ class VehicleProfile extends DataClass implements Insertable<VehicleProfile> {
           other.year == this.year &&
           other.nickname == this.nickname &&
           other.vin == this.vin &&
+          other.plateNumber == this.plateNumber &&
           other.currentOdometerKm == this.currentOdometerKm &&
           other.odometerUnit == this.odometerUnit &&
           other.createdAt == this.createdAt &&
@@ -1780,6 +1823,7 @@ class VehicleProfilesCompanion extends UpdateCompanion<VehicleProfile> {
   final Value<int?> year;
   final Value<String?> nickname;
   final Value<String?> vin;
+  final Value<String?> plateNumber;
   final Value<int> currentOdometerKm;
   final Value<String> odometerUnit;
   final Value<DateTime> createdAt;
@@ -1794,6 +1838,7 @@ class VehicleProfilesCompanion extends UpdateCompanion<VehicleProfile> {
     this.year = const Value.absent(),
     this.nickname = const Value.absent(),
     this.vin = const Value.absent(),
+    this.plateNumber = const Value.absent(),
     this.currentOdometerKm = const Value.absent(),
     this.odometerUnit = const Value.absent(),
     this.createdAt = const Value.absent(),
@@ -1809,6 +1854,7 @@ class VehicleProfilesCompanion extends UpdateCompanion<VehicleProfile> {
     this.year = const Value.absent(),
     this.nickname = const Value.absent(),
     this.vin = const Value.absent(),
+    this.plateNumber = const Value.absent(),
     this.currentOdometerKm = const Value.absent(),
     this.odometerUnit = const Value.absent(),
     this.createdAt = const Value.absent(),
@@ -1826,6 +1872,7 @@ class VehicleProfilesCompanion extends UpdateCompanion<VehicleProfile> {
     Expression<int>? year,
     Expression<String>? nickname,
     Expression<String>? vin,
+    Expression<String>? plateNumber,
     Expression<int>? currentOdometerKm,
     Expression<String>? odometerUnit,
     Expression<DateTime>? createdAt,
@@ -1841,6 +1888,7 @@ class VehicleProfilesCompanion extends UpdateCompanion<VehicleProfile> {
       if (year != null) 'year': year,
       if (nickname != null) 'nickname': nickname,
       if (vin != null) 'vin': vin,
+      if (plateNumber != null) 'plate_number': plateNumber,
       if (currentOdometerKm != null) 'current_odometer_km': currentOdometerKm,
       if (odometerUnit != null) 'odometer_unit': odometerUnit,
       if (createdAt != null) 'created_at': createdAt,
@@ -1858,6 +1906,7 @@ class VehicleProfilesCompanion extends UpdateCompanion<VehicleProfile> {
     Value<int?>? year,
     Value<String?>? nickname,
     Value<String?>? vin,
+    Value<String?>? plateNumber,
     Value<int>? currentOdometerKm,
     Value<String>? odometerUnit,
     Value<DateTime>? createdAt,
@@ -1873,6 +1922,7 @@ class VehicleProfilesCompanion extends UpdateCompanion<VehicleProfile> {
       year: year ?? this.year,
       nickname: nickname ?? this.nickname,
       vin: vin ?? this.vin,
+      plateNumber: plateNumber ?? this.plateNumber,
       currentOdometerKm: currentOdometerKm ?? this.currentOdometerKm,
       odometerUnit: odometerUnit ?? this.odometerUnit,
       createdAt: createdAt ?? this.createdAt,
@@ -1910,6 +1960,9 @@ class VehicleProfilesCompanion extends UpdateCompanion<VehicleProfile> {
     if (vin.present) {
       map['vin'] = Variable<String>(vin.value);
     }
+    if (plateNumber.present) {
+      map['plate_number'] = Variable<String>(plateNumber.value);
+    }
     if (currentOdometerKm.present) {
       map['current_odometer_km'] = Variable<int>(currentOdometerKm.value);
     }
@@ -1937,6 +1990,7 @@ class VehicleProfilesCompanion extends UpdateCompanion<VehicleProfile> {
           ..write('year: $year, ')
           ..write('nickname: $nickname, ')
           ..write('vin: $vin, ')
+          ..write('plateNumber: $plateNumber, ')
           ..write('currentOdometerKm: $currentOdometerKm, ')
           ..write('odometerUnit: $odometerUnit, ')
           ..write('createdAt: $createdAt, ')
@@ -5115,6 +5169,7 @@ typedef $$VehicleProfilesTableCreateCompanionBuilder =
       Value<int?> year,
       Value<String?> nickname,
       Value<String?> vin,
+      Value<String?> plateNumber,
       Value<int> currentOdometerKm,
       Value<String> odometerUnit,
       Value<DateTime> createdAt,
@@ -5131,6 +5186,7 @@ typedef $$VehicleProfilesTableUpdateCompanionBuilder =
       Value<int?> year,
       Value<String?> nickname,
       Value<String?> vin,
+      Value<String?> plateNumber,
       Value<int> currentOdometerKm,
       Value<String> odometerUnit,
       Value<DateTime> createdAt,
@@ -5273,6 +5329,11 @@ class $$VehicleProfilesTableFilterComposer
 
   ColumnFilters<String> get vin => $composableBuilder(
     column: $table.vin,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get plateNumber => $composableBuilder(
+    column: $table.plateNumber,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -5430,6 +5491,11 @@ class $$VehicleProfilesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get plateNumber => $composableBuilder(
+    column: $table.plateNumber,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get currentOdometerKm => $composableBuilder(
     column: $table.currentOdometerKm,
     builder: (column) => ColumnOrderings(column),
@@ -5550,6 +5616,11 @@ class $$VehicleProfilesTableAnnotationComposer
 
   GeneratedColumn<String> get vin =>
       $composableBuilder(column: $table.vin, builder: (column) => column);
+
+  GeneratedColumn<String> get plateNumber => $composableBuilder(
+    column: $table.plateNumber,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<int> get currentOdometerKm => $composableBuilder(
     column: $table.currentOdometerKm,
@@ -5707,6 +5778,7 @@ class $$VehicleProfilesTableTableManager
                 Value<int?> year = const Value.absent(),
                 Value<String?> nickname = const Value.absent(),
                 Value<String?> vin = const Value.absent(),
+                Value<String?> plateNumber = const Value.absent(),
                 Value<int> currentOdometerKm = const Value.absent(),
                 Value<String> odometerUnit = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
@@ -5721,6 +5793,7 @@ class $$VehicleProfilesTableTableManager
                 year: year,
                 nickname: nickname,
                 vin: vin,
+                plateNumber: plateNumber,
                 currentOdometerKm: currentOdometerKm,
                 odometerUnit: odometerUnit,
                 createdAt: createdAt,
@@ -5737,6 +5810,7 @@ class $$VehicleProfilesTableTableManager
                 Value<int?> year = const Value.absent(),
                 Value<String?> nickname = const Value.absent(),
                 Value<String?> vin = const Value.absent(),
+                Value<String?> plateNumber = const Value.absent(),
                 Value<int> currentOdometerKm = const Value.absent(),
                 Value<String> odometerUnit = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
@@ -5751,6 +5825,7 @@ class $$VehicleProfilesTableTableManager
                 year: year,
                 nickname: nickname,
                 vin: vin,
+                plateNumber: plateNumber,
                 currentOdometerKm: currentOdometerKm,
                 odometerUnit: odometerUnit,
                 createdAt: createdAt,

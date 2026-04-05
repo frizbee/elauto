@@ -28,6 +28,9 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   VehicleModel? _selectedModel;
   final TextEditingController _yearController = TextEditingController();
   final TextEditingController _mileageController = TextEditingController();
+  final TextEditingController _identificationController =
+      TextEditingController();
+  final TextEditingController _plateNumberController = TextEditingController();
   String _odometerUnit = 'km';
   String? _yearErrorText;
   String? _mileageErrorText;
@@ -42,6 +45,8 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   void dispose() {
     _yearController.dispose();
     _mileageController.dispose();
+    _identificationController.dispose();
+    _plateNumberController.dispose();
     super.dispose();
   }
 
@@ -174,6 +179,29 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
       return;
     }
 
+    if (_currentStep == 2) {
+      final yearError = _validateYear();
+      final mileageError = _validateMileage();
+
+      setState(() {
+        _yearErrorText = yearError;
+        _mileageErrorText = mileageError;
+      });
+
+      if (yearError != null || mileageError != null) {
+        return;
+      }
+
+      setState(() {
+        _currentStep = 3;
+      });
+      return;
+    }
+
+    await _finishOnboarding();
+  }
+
+  Future<void> _finishOnboarding() async {
     final selectedType = _selectedType;
     final selectedBrand = _selectedBrand;
     final selectedModel = _selectedModel;
@@ -207,6 +235,8 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
       year: year,
       currentOdometerKm: currentOdometerKm,
       odometerUnit: _odometerUnit,
+      vin: _trimToNull(_identificationController.text),
+      plateNumber: _trimToNull(_plateNumberController.text),
     );
 
     if (!mounted) {
@@ -255,6 +285,8 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                                     _selectedType = type;
                                     _selectedBrand = null;
                                     _selectedModel = null;
+                                    _identificationController.clear();
+                                    _plateNumberController.clear();
                                   });
                                 },
                               )
@@ -272,7 +304,8 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                                 onPickBrand: _pickBrand,
                                 onPickModel: _pickModel,
                               )
-                            : _VehicleDetailsStep(
+                            : _currentStep == 2
+                            ? _VehicleDetailsStep(
                                 key: const ValueKey('vehicle-details-step'),
                                 selectedBrand: _selectedBrand,
                                 selectedModel: _selectedModel,
@@ -305,6 +338,25 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                                     });
                                   }
                                 },
+                              )
+                            : _VehicleIdentificationStep(
+                                key: const ValueKey(
+                                  'vehicle-identification-step',
+                                ),
+                                selectedType: _selectedType,
+                                identificationController:
+                                    _identificationController,
+                                plateNumberController: _plateNumberController,
+                                onBack: () {
+                                  setState(() {
+                                    _currentStep = 2;
+                                  });
+                                },
+                                onSkip: _isSaving
+                                    ? null
+                                    : () {
+                                        _finishOnboarding();
+                                      },
                               ),
                       ),
                     ),
@@ -312,7 +364,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: List.generate(
-                        3,
+                        4,
                         (index) => AnimatedContainer(
                           duration: const Duration(milliseconds: 200),
                           margin: const EdgeInsets.symmetric(horizontal: 4),
@@ -344,7 +396,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                                     strokeWidth: 2,
                                   ),
                                 )
-                              : Text(_currentStep < 2 ? 'Next' : 'Finish'),
+                              : Text(_currentStep < 3 ? 'Next' : 'Finish'),
                         ),
                       ),
                     ),
@@ -364,7 +416,11 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
       return _selectedBrand != null && _selectedModel != null;
     }
 
-    return _validateYear() == null && _validateMileage() == null;
+    if (_currentStep == 2) {
+      return _validateYear() == null && _validateMileage() == null;
+    }
+
+    return true;
   }
 
   String _titleForStep() {
@@ -375,6 +431,8 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
         return 'Choose your vehicle';
       case 2:
         return 'Add current details';
+      case 3:
+        return 'Add identification';
     }
 
     return 'Onboarding';
@@ -388,6 +446,8 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
         return 'Pick the brand and model. Add a new one if it is missing.';
       case 2:
         return 'Set the year, current mileage, and unit for this vehicle.';
+      case 3:
+        return 'Add VIN, frame number, or plate number. You can skip this step.';
     }
 
     return '';
@@ -438,6 +498,11 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
     }
 
     return null;
+  }
+
+  String? _trimToNull(String value) {
+    final trimmed = value.trim();
+    return trimmed.isEmpty ? null : trimmed;
   }
 }
 
@@ -658,6 +723,68 @@ class _VehicleDetailsStep extends StatelessWidget {
               },
             ),
           ],
+        ),
+      ],
+    );
+  }
+}
+
+class _VehicleIdentificationStep extends StatelessWidget {
+  const _VehicleIdentificationStep({
+    super.key,
+    required this.selectedType,
+    required this.identificationController,
+    required this.plateNumberController,
+    required this.onBack,
+    required this.onSkip,
+  });
+
+  final VehicleType? selectedType;
+  final TextEditingController identificationController;
+  final TextEditingController plateNumberController;
+  final VoidCallback onBack;
+  final VoidCallback? onSkip;
+
+  @override
+  Widget build(BuildContext context) {
+    final identificationLabel = selectedType?.code == 'car'
+        ? 'VIN'
+        : 'Frame number';
+
+    return ListView(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            TextButton.icon(
+              onPressed: onBack,
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.textPrimary,
+                padding: EdgeInsets.zero,
+              ),
+              icon: const Icon(Icons.arrow_back),
+              label: const Text('Back'),
+            ),
+            TextButton(onPressed: onSkip, child: const Text('Skip')),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        TextField(
+          controller: identificationController,
+          decoration: InputDecoration(
+            labelText: '$identificationLabel (optional)',
+            hintText: selectedType?.code == 'car'
+                ? 'Enter VIN'
+                : 'Enter frame number',
+          ),
+        ),
+        const SizedBox(height: AppSpacing.lg),
+        TextField(
+          controller: plateNumberController,
+          decoration: const InputDecoration(
+            labelText: 'Plate number',
+            hintText: 'Enter plate number',
+          ),
         ),
       ],
     );

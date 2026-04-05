@@ -31,7 +31,7 @@ class DashboardScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '${vehicle.vehicleBrand.name} ${vehicle.vehicleModel.name}',
+                    'Dashboard',
                     style: Theme.of(context).textTheme.headlineMedium,
                   ),
                   const SizedBox(height: AppSpacing.lg),
@@ -65,6 +65,21 @@ class DashboardScreen extends StatelessWidget {
                             'Mileage: ${_formatMileage(vehicle.profile.currentOdometerKm, vehicle.profile.odometerUnit)}',
                             style: Theme.of(context).textTheme.bodyMedium,
                           ),
+                          if ((vehicle.profile.vin ?? '').isNotEmpty) ...[
+                            const SizedBox(height: AppSpacing.xs),
+                            Text(
+                              '${vehicle.vehicleType.code == 'car' ? 'VIN' : 'Frame'}: ${vehicle.profile.vin}',
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                          ],
+                          if ((vehicle.profile.plateNumber ?? '')
+                              .isNotEmpty) ...[
+                            const SizedBox(height: AppSpacing.xs),
+                            Text(
+                              'Plate: ${vehicle.profile.plateNumber}',
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                          ],
                         ],
                       ),
                     ),
