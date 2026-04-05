@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'dart:math' as math;
 
 import '../../data/local/app_database.dart';
 import '../../theme/app_theme.dart';
@@ -35,7 +34,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   final TextEditingController _plateNumberController = TextEditingController();
   final TextEditingController _nicknameController = TextEditingController();
   String _odometerUnit = 'km';
-  Color? _selectedVehicleColor;
+  String? _selectedVehicleColor;
   String? _yearErrorText;
   String? _mileageErrorText;
 
@@ -251,9 +250,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
       currentOdometerKm: currentOdometerKm,
       odometerUnit: _odometerUnit,
       nickname: _trimToNull(_nicknameController.text),
-      vehicleColor: _selectedVehicleColor == null
-          ? null
-          : _colorToHex(_selectedVehicleColor!),
+      vehicleColor: _selectedVehicleColor,
       vin: _trimToNull(_identificationController.text),
       plateNumber: _trimToNull(_plateNumberController.text),
     );
@@ -407,9 +404,9 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                                         _generatedNickname;
                                   });
                                 },
-                                onColorSelected: (colorValue) {
+                                onColorSelected: (colorName) {
                                   setState(() {
-                                    _selectedVehicleColor = colorValue;
+                                    _selectedVehicleColor = colorName;
                                   });
                                 },
                               ),
@@ -573,13 +570,6 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
     final brand = _selectedBrand?.name ?? '';
     final model = _selectedModel?.name ?? '';
     return '$brand $model'.trim();
-  }
-
-  String _colorToHex(Color color) {
-    final red = color.r.toInt().toRadixString(16).padLeft(2, '0');
-    final green = color.g.toInt().toRadixString(16).padLeft(2, '0');
-    final blue = color.b.toInt().toRadixString(16).padLeft(2, '0');
-    return '#${red.toUpperCase()}${green.toUpperCase()}${blue.toUpperCase()}';
   }
 }
 
@@ -887,11 +877,11 @@ class _VehiclePersonalizationStep extends StatelessWidget {
 
   final String generatedNickname;
   final TextEditingController nicknameController;
-  final Color? selectedColor;
+  final String? selectedColor;
   final VoidCallback onBack;
   final VoidCallback? onSkip;
   final VoidCallback onUseGeneratedNickname;
-  final ValueChanged<Color> onColorSelected;
+  final ValueChanged<String> onColorSelected;
 
   @override
   Widget build(BuildContext context) {
@@ -934,21 +924,15 @@ class _VehiclePersonalizationStep extends StatelessWidget {
         const SizedBox(height: AppSpacing.lg),
         Text('Color', style: Theme.of(context).textTheme.titleSmall),
         const SizedBox(height: AppSpacing.sm),
-        _CircularHuePicker(
-          selectedColor: selectedColor,
-          onColorChanged: onColorSelected,
-        ),
-        const SizedBox(height: AppSpacing.md),
         Wrap(
           spacing: AppSpacing.sm,
           runSpacing: AppSpacing.sm,
-          children: kNeutralVehicleColors
+          children: kVehicleColorOptions
               .map(
                 (colorOption) => _VehicleColorChip(
                   colorOption: colorOption,
-                  isSelected:
-                      selectedColor?.toARGB32() == colorOption.color.toARGB32(),
-                  onTap: () => onColorSelected(colorOption.color),
+                  isSelected: selectedColor == colorOption.name,
+                  onTap: () => onColorSelected(colorOption.name),
                 ),
               )
               .toList(),
@@ -976,35 +960,37 @@ class _VehicleColorChip extends StatelessWidget {
       borderRadius: BorderRadius.circular(AppRadius.full),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.md,
-          vertical: AppSpacing.sm,
-        ),
+        width: 78,
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.accentSoft : AppColors.card,
-          borderRadius: BorderRadius.circular(AppRadius.full),
+          color: isSelected ? AppColors.accentSoft : Colors.transparent,
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           border: Border.all(
-            color: isSelected ? AppColors.accent : AppColors.border,
+            color: isSelected ? AppColors.accent : Colors.transparent,
           ),
         ),
-        child: Row(
+        child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 18,
-              height: 18,
+              width: 34,
+              height: 34,
               decoration: BoxDecoration(
                 color: colorOption.color,
                 shape: BoxShape.circle,
-                border: Border.all(color: AppColors.border),
+                border: Border.all(
+                  color: isSelected ? AppColors.textPrimary : AppColors.border,
+                  width: isSelected ? 2 : 1,
+                ),
               ),
             ),
-            const SizedBox(width: AppSpacing.xs),
+            const SizedBox(height: AppSpacing.xs),
             Text(
               colorOption.name,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: AppColors.textPrimary,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
               ),
             ),
           ],
@@ -1021,169 +1007,19 @@ class VehicleColorOption {
   final Color color;
 }
 
-const kNeutralVehicleColors = [
+const kVehicleColorOptions = [
   VehicleColorOption(name: 'White', color: Color(0xFFF8FAFC)),
   VehicleColorOption(name: 'Black', color: Color(0xFF111111)),
   VehicleColorOption(name: 'Silver', color: Color(0xFFC0C7D1)),
   VehicleColorOption(name: 'Gray', color: Color(0xFF6B7280)),
+  VehicleColorOption(name: 'Blue', color: Color(0xFF2563EB)),
+  VehicleColorOption(name: 'Red', color: Color(0xFFDC2626)),
+  VehicleColorOption(name: 'Green', color: Color(0xFF2F855A)),
+  VehicleColorOption(name: 'Brown', color: Color(0xFF8B5E3C)),
   VehicleColorOption(name: 'Beige', color: Color(0xFFD6C6A5)),
+  VehicleColorOption(name: 'Orange', color: Color(0xFFFF6A00)),
+  VehicleColorOption(name: 'Yellow', color: Color(0xFFF59E0B)),
 ];
-
-class _CircularHuePicker extends StatelessWidget {
-  const _CircularHuePicker({
-    required this.selectedColor,
-    required this.onColorChanged,
-  });
-
-  final Color? selectedColor;
-  final ValueChanged<Color> onColorChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    const wheelSize = 220.0;
-    final selectedHue = selectedColor == null
-        ? 0.0
-        : HSVColor.fromColor(selectedColor!).hue;
-
-    return Center(
-      child: GestureDetector(
-        onPanDown: (details) => _handleGesture(details.localPosition),
-        onPanUpdate: (details) => _handleGesture(details.localPosition),
-        child: SizedBox(
-          width: wheelSize,
-          height: wheelSize,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              CustomPaint(
-                size: const Size.square(wheelSize),
-                painter: _HueWheelPainter(
-                  selectedHue: selectedHue,
-                  showThumb: selectedColor != null,
-                ),
-              ),
-              Container(
-                width: 104,
-                height: 104,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: selectedColor ?? AppColors.card,
-                  border: Border.all(color: AppColors.border),
-                  boxShadow: AppShadows.soft,
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  selectedColor == null
-                      ? 'Pick\ncolor'
-                      : _colorNameFromColor(selectedColor!),
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: _labelColorFor(selectedColor),
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _handleGesture(Offset localPosition) {
-    const wheelSize = 220.0;
-    final center = const Offset(wheelSize / 2, wheelSize / 2);
-    final vector = localPosition - center;
-    final angle = math.atan2(vector.dy, vector.dx);
-    final hue = (angle * 180 / math.pi + 90 + 360) % 360;
-    final color = HSVColor.fromAHSV(1, hue, 0.75, 0.88).toColor();
-    onColorChanged(color);
-  }
-
-  String _colorNameFromColor(Color color) {
-    final hsv = HSVColor.fromColor(color);
-
-    if (hsv.saturation < 0.12) {
-      if (hsv.value > 0.92) return 'White';
-      if (hsv.value > 0.72) return 'Silver';
-      if (hsv.value > 0.45) return 'Gray';
-      return 'Black';
-    }
-
-    final hue = hsv.hue;
-    if (hue < 20 || hue >= 340) return 'Red';
-    if (hue < 45) return 'Orange';
-    if (hue < 65) return 'Yellow';
-    if (hue < 170) return 'Green';
-    if (hue < 255) return 'Blue';
-    if (hue < 300) return 'Purple';
-    return 'Pink';
-  }
-
-  Color _labelColorFor(Color? color) {
-    if (color == null) {
-      return AppColors.textPrimary;
-    }
-
-    return color.computeLuminance() > 0.6
-        ? AppColors.textPrimary
-        : Colors.white;
-  }
-}
-
-class _HueWheelPainter extends CustomPainter {
-  const _HueWheelPainter({required this.selectedHue, required this.showThumb});
-
-  final double selectedHue;
-  final bool showThumb;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = size.center(Offset.zero);
-    final radius = size.width / 2 - 14;
-    const strokeWidth = 26.0;
-
-    final rect = Rect.fromCircle(center: center, radius: radius);
-    final wheelPaint = Paint()
-      ..shader = const SweepGradient(
-        startAngle: -math.pi / 2,
-        endAngle: math.pi * 3 / 2,
-        colors: [
-          Color(0xFFFF0000),
-          Color(0xFFFFFF00),
-          Color(0xFF00FF00),
-          Color(0xFF00FFFF),
-          Color(0xFF0000FF),
-          Color(0xFFFF00FF),
-          Color(0xFFFF0000),
-        ],
-      ).createShader(rect)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth;
-
-    canvas.drawCircle(center, radius, wheelPaint);
-
-    if (!showThumb) {
-      return;
-    }
-
-    final angle = (selectedHue - 90) * math.pi / 180;
-    final thumbOffset = Offset(
-      center.dx + radius * math.cos(angle),
-      center.dy + radius * math.sin(angle),
-    );
-    final thumbColor = HSVColor.fromAHSV(1, selectedHue, 0.75, 0.88).toColor();
-
-    canvas.drawCircle(thumbOffset, 12, Paint()..color = Colors.white);
-    canvas.drawCircle(thumbOffset, 9, Paint()..color = thumbColor);
-  }
-
-  @override
-  bool shouldRepaint(covariant _HueWheelPainter oldDelegate) {
-    return oldDelegate.selectedHue != selectedHue ||
-        oldDelegate.showThumb != showThumb;
-  }
-}
 
 class _SelectionField extends StatelessWidget {
   const _SelectionField({
