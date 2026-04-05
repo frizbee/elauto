@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 
+import 'data/local/app_database.dart';
+import 'features/dashboard/dashboard_screen.dart';
+import 'features/onboarding/onboarding_flow.dart';
+
 void main() {
-  runApp(const ElAutoApp());
+  runApp(const RepackApp());
 }
 
-class ElAutoApp extends StatelessWidget {
-  const ElAutoApp({super.key});
+class RepackApp extends StatelessWidget {
+  const RepackApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -38,50 +42,70 @@ class AppStartupGate extends StatefulWidget {
 class _AppStartupGateState extends State<AppStartupGate> {
   static const _minimumSplashDuration = Duration(milliseconds: 1200);
 
-  late final Future<void> _initialization;
+  late final AppDatabase _database;
+  _AppView _currentView = _AppView.loading;
 
   @override
   void initState() {
     super.initState();
-    _initialization = _loadApp();
+    _database = AppDatabase();
+    _initializeApp();
   }
 
-  Future<void> _loadApp() async {
+  @override
+  void dispose() {
+    _database.close();
+    super.dispose();
+  }
+
+  Future<void> _initializeApp() async {
     final startupWatch = Stopwatch()..start();
 
     await WidgetsBinding.instance.endOfFrame;
+
+    if (mounted) {
+      await precacheImage(const AssetImage('assets/images/logo.png'), context);
+    }
+
+    final hasVehicleProfile = await _database.getPrimaryVehicle() != null;
+
+    startupWatch.stop();
+    final remainingSplashTime = _minimumSplashDuration - startupWatch.elapsed;
+
+    if (remainingSplashTime > Duration.zero) {
+      await Future<void>.delayed(remainingSplashTime);
+    }
 
     if (!mounted) {
       return;
     }
 
-    await precacheImage(
-      const AssetImage('assets/images/logo.png'),
-      context,
-    );
+    setState(() {
+      _currentView = hasVehicleProfile
+          ? _AppView.dashboard
+          : _AppView.onboarding;
+    });
+  }
 
-    startupWatch.stop();
-
-    final remainingSplashTime =
-        _minimumSplashDuration - startupWatch.elapsed;
-
-    if (remainingSplashTime > Duration.zero) {
-      await Future<void>.delayed(remainingSplashTime);
-    }
+  void _handleOnboardingCompleted() {
+    setState(() {
+      _currentView = _AppView.dashboard;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<void>(
-      future: _initialization,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState != ConnectionState.done) {
-          return const SplashScreen();
-        }
-
-        return const DashboardScreen();
-      },
-    );
+    switch (_currentView) {
+      case _AppView.loading:
+        return const SplashScreen();
+      case _AppView.onboarding:
+        return OnboardingFlow(
+          database: _database,
+          onCompleted: _handleOnboardingCompleted,
+        );
+      case _AppView.dashboard:
+        return DashboardScreen(database: _database);
+    }
   }
 }
 
@@ -104,15 +128,4 @@ class SplashScreen extends StatelessWidget {
   }
 }
 
-class DashboardScreen extends StatelessWidget {
-  const DashboardScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(body: SizedBox.expand(
-      child: Center(
-        child: Text('Dashboard'),
-      ),
-    ));
-  }
-}
+enum _AppView { loading, onboarding, dashboard }

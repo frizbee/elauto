@@ -14,7 +14,8 @@ class ReminderRules extends Table {
 
   IntColumn get advanceNoticeKm => integer().withDefault(const Constant(500))();
 
-  IntColumn get advanceNoticeDays => integer().withDefault(const Constant(14))();
+  IntColumn get advanceNoticeDays =>
+      integer().withDefault(const Constant(14))();
 
   BoolColumn get isEnabled => boolean().withDefault(const Constant(true))();
 
