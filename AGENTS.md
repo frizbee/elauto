@@ -1,13 +1,13 @@
-# El Auto — AI Agent Notes
+# Repack — AI Agent Notes
 
 ## App Overview
-- App name: `El Auto`
+- App name: `Repack`
 - Platforms: `iOS` and `Android`
 - Framework: `Flutter`
 - Main purpose: help car owners track maintenance, repairs, and part changes on their phone.
 
 ## Product Vision
-`El Auto` is a mobile-first car maintenance tracker. A user installs the app, creates a local vehicle profile, and then records service events such as oil changes, spark plug replacement, and other fixes. The app should make it easy to see the current car profile, recent maintenance history, and upcoming service reminders.
+`Repack` is a mobile-first car maintenance tracker. A user installs the app, creates a local vehicle profile, and then records service events such as oil changes, spark plug replacement, and other fixes. The app should make it easy to see the current car profile, recent maintenance history, and upcoming service reminders.
 
 ## Core Requirements
 
