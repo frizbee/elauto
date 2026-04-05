@@ -24,6 +24,8 @@ class VehicleProfiles extends Table {
 
   TextColumn get nickname => text().nullable()();
 
+  TextColumn get vehicleColor => text().nullable()();
+
   TextColumn get vin => text().nullable()();
 
   TextColumn get plateNumber => text().nullable()();

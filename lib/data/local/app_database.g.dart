@@ -1275,6 +1275,17 @@ class $VehicleProfilesTable extends VehicleProfiles
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _vehicleColorMeta = const VerificationMeta(
+    'vehicleColor',
+  );
+  @override
+  late final GeneratedColumn<String> vehicleColor = GeneratedColumn<String>(
+    'vehicle_color',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _vinMeta = const VerificationMeta('vin');
   @override
   late final GeneratedColumn<String> vin = GeneratedColumn<String>(
@@ -1353,6 +1364,7 @@ class $VehicleProfilesTable extends VehicleProfiles
     drivetrain,
     year,
     nickname,
+    vehicleColor,
     vin,
     plateNumber,
     currentOdometerKm,
@@ -1433,6 +1445,15 @@ class $VehicleProfilesTable extends VehicleProfiles
       context.handle(
         _nicknameMeta,
         nickname.isAcceptableOrUnknown(data['nickname']!, _nicknameMeta),
+      );
+    }
+    if (data.containsKey('vehicle_color')) {
+      context.handle(
+        _vehicleColorMeta,
+        vehicleColor.isAcceptableOrUnknown(
+          data['vehicle_color']!,
+          _vehicleColorMeta,
+        ),
       );
     }
     if (data.containsKey('vin')) {
@@ -1521,6 +1542,10 @@ class $VehicleProfilesTable extends VehicleProfiles
         DriftSqlType.string,
         data['${effectivePrefix}nickname'],
       ),
+      vehicleColor: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}vehicle_color'],
+      ),
       vin: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}vin'],
@@ -1563,6 +1588,7 @@ class VehicleProfile extends DataClass implements Insertable<VehicleProfile> {
   final String? drivetrain;
   final int? year;
   final String? nickname;
+  final String? vehicleColor;
   final String? vin;
   final String? plateNumber;
   final int currentOdometerKm;
@@ -1578,6 +1604,7 @@ class VehicleProfile extends DataClass implements Insertable<VehicleProfile> {
     this.drivetrain,
     this.year,
     this.nickname,
+    this.vehicleColor,
     this.vin,
     this.plateNumber,
     required this.currentOdometerKm,
@@ -1603,6 +1630,9 @@ class VehicleProfile extends DataClass implements Insertable<VehicleProfile> {
     }
     if (!nullToAbsent || nickname != null) {
       map['nickname'] = Variable<String>(nickname);
+    }
+    if (!nullToAbsent || vehicleColor != null) {
+      map['vehicle_color'] = Variable<String>(vehicleColor);
     }
     if (!nullToAbsent || vin != null) {
       map['vin'] = Variable<String>(vin);
@@ -1633,6 +1663,9 @@ class VehicleProfile extends DataClass implements Insertable<VehicleProfile> {
       nickname: nickname == null && nullToAbsent
           ? const Value.absent()
           : Value(nickname),
+      vehicleColor: vehicleColor == null && nullToAbsent
+          ? const Value.absent()
+          : Value(vehicleColor),
       vin: vin == null && nullToAbsent ? const Value.absent() : Value(vin),
       plateNumber: plateNumber == null && nullToAbsent
           ? const Value.absent()
@@ -1658,6 +1691,7 @@ class VehicleProfile extends DataClass implements Insertable<VehicleProfile> {
       drivetrain: serializer.fromJson<String?>(json['drivetrain']),
       year: serializer.fromJson<int?>(json['year']),
       nickname: serializer.fromJson<String?>(json['nickname']),
+      vehicleColor: serializer.fromJson<String?>(json['vehicleColor']),
       vin: serializer.fromJson<String?>(json['vin']),
       plateNumber: serializer.fromJson<String?>(json['plateNumber']),
       currentOdometerKm: serializer.fromJson<int>(json['currentOdometerKm']),
@@ -1678,6 +1712,7 @@ class VehicleProfile extends DataClass implements Insertable<VehicleProfile> {
       'drivetrain': serializer.toJson<String?>(drivetrain),
       'year': serializer.toJson<int?>(year),
       'nickname': serializer.toJson<String?>(nickname),
+      'vehicleColor': serializer.toJson<String?>(vehicleColor),
       'vin': serializer.toJson<String?>(vin),
       'plateNumber': serializer.toJson<String?>(plateNumber),
       'currentOdometerKm': serializer.toJson<int>(currentOdometerKm),
@@ -1696,6 +1731,7 @@ class VehicleProfile extends DataClass implements Insertable<VehicleProfile> {
     Value<String?> drivetrain = const Value.absent(),
     Value<int?> year = const Value.absent(),
     Value<String?> nickname = const Value.absent(),
+    Value<String?> vehicleColor = const Value.absent(),
     Value<String?> vin = const Value.absent(),
     Value<String?> plateNumber = const Value.absent(),
     int? currentOdometerKm,
@@ -1713,6 +1749,7 @@ class VehicleProfile extends DataClass implements Insertable<VehicleProfile> {
     drivetrain: drivetrain.present ? drivetrain.value : this.drivetrain,
     year: year.present ? year.value : this.year,
     nickname: nickname.present ? nickname.value : this.nickname,
+    vehicleColor: vehicleColor.present ? vehicleColor.value : this.vehicleColor,
     vin: vin.present ? vin.value : this.vin,
     plateNumber: plateNumber.present ? plateNumber.value : this.plateNumber,
     currentOdometerKm: currentOdometerKm ?? this.currentOdometerKm,
@@ -1740,6 +1777,9 @@ class VehicleProfile extends DataClass implements Insertable<VehicleProfile> {
           : this.drivetrain,
       year: data.year.present ? data.year.value : this.year,
       nickname: data.nickname.present ? data.nickname.value : this.nickname,
+      vehicleColor: data.vehicleColor.present
+          ? data.vehicleColor.value
+          : this.vehicleColor,
       vin: data.vin.present ? data.vin.value : this.vin,
       plateNumber: data.plateNumber.present
           ? data.plateNumber.value
@@ -1766,6 +1806,7 @@ class VehicleProfile extends DataClass implements Insertable<VehicleProfile> {
           ..write('drivetrain: $drivetrain, ')
           ..write('year: $year, ')
           ..write('nickname: $nickname, ')
+          ..write('vehicleColor: $vehicleColor, ')
           ..write('vin: $vin, ')
           ..write('plateNumber: $plateNumber, ')
           ..write('currentOdometerKm: $currentOdometerKm, ')
@@ -1786,6 +1827,7 @@ class VehicleProfile extends DataClass implements Insertable<VehicleProfile> {
     drivetrain,
     year,
     nickname,
+    vehicleColor,
     vin,
     plateNumber,
     currentOdometerKm,
@@ -1805,6 +1847,7 @@ class VehicleProfile extends DataClass implements Insertable<VehicleProfile> {
           other.drivetrain == this.drivetrain &&
           other.year == this.year &&
           other.nickname == this.nickname &&
+          other.vehicleColor == this.vehicleColor &&
           other.vin == this.vin &&
           other.plateNumber == this.plateNumber &&
           other.currentOdometerKm == this.currentOdometerKm &&
@@ -1822,6 +1865,7 @@ class VehicleProfilesCompanion extends UpdateCompanion<VehicleProfile> {
   final Value<String?> drivetrain;
   final Value<int?> year;
   final Value<String?> nickname;
+  final Value<String?> vehicleColor;
   final Value<String?> vin;
   final Value<String?> plateNumber;
   final Value<int> currentOdometerKm;
@@ -1837,6 +1881,7 @@ class VehicleProfilesCompanion extends UpdateCompanion<VehicleProfile> {
     this.drivetrain = const Value.absent(),
     this.year = const Value.absent(),
     this.nickname = const Value.absent(),
+    this.vehicleColor = const Value.absent(),
     this.vin = const Value.absent(),
     this.plateNumber = const Value.absent(),
     this.currentOdometerKm = const Value.absent(),
@@ -1853,6 +1898,7 @@ class VehicleProfilesCompanion extends UpdateCompanion<VehicleProfile> {
     this.drivetrain = const Value.absent(),
     this.year = const Value.absent(),
     this.nickname = const Value.absent(),
+    this.vehicleColor = const Value.absent(),
     this.vin = const Value.absent(),
     this.plateNumber = const Value.absent(),
     this.currentOdometerKm = const Value.absent(),
@@ -1871,6 +1917,7 @@ class VehicleProfilesCompanion extends UpdateCompanion<VehicleProfile> {
     Expression<String>? drivetrain,
     Expression<int>? year,
     Expression<String>? nickname,
+    Expression<String>? vehicleColor,
     Expression<String>? vin,
     Expression<String>? plateNumber,
     Expression<int>? currentOdometerKm,
@@ -1887,6 +1934,7 @@ class VehicleProfilesCompanion extends UpdateCompanion<VehicleProfile> {
       if (drivetrain != null) 'drivetrain': drivetrain,
       if (year != null) 'year': year,
       if (nickname != null) 'nickname': nickname,
+      if (vehicleColor != null) 'vehicle_color': vehicleColor,
       if (vin != null) 'vin': vin,
       if (plateNumber != null) 'plate_number': plateNumber,
       if (currentOdometerKm != null) 'current_odometer_km': currentOdometerKm,
@@ -1905,6 +1953,7 @@ class VehicleProfilesCompanion extends UpdateCompanion<VehicleProfile> {
     Value<String?>? drivetrain,
     Value<int?>? year,
     Value<String?>? nickname,
+    Value<String?>? vehicleColor,
     Value<String?>? vin,
     Value<String?>? plateNumber,
     Value<int>? currentOdometerKm,
@@ -1921,6 +1970,7 @@ class VehicleProfilesCompanion extends UpdateCompanion<VehicleProfile> {
       drivetrain: drivetrain ?? this.drivetrain,
       year: year ?? this.year,
       nickname: nickname ?? this.nickname,
+      vehicleColor: vehicleColor ?? this.vehicleColor,
       vin: vin ?? this.vin,
       plateNumber: plateNumber ?? this.plateNumber,
       currentOdometerKm: currentOdometerKm ?? this.currentOdometerKm,
@@ -1957,6 +2007,9 @@ class VehicleProfilesCompanion extends UpdateCompanion<VehicleProfile> {
     if (nickname.present) {
       map['nickname'] = Variable<String>(nickname.value);
     }
+    if (vehicleColor.present) {
+      map['vehicle_color'] = Variable<String>(vehicleColor.value);
+    }
     if (vin.present) {
       map['vin'] = Variable<String>(vin.value);
     }
@@ -1989,6 +2042,7 @@ class VehicleProfilesCompanion extends UpdateCompanion<VehicleProfile> {
           ..write('drivetrain: $drivetrain, ')
           ..write('year: $year, ')
           ..write('nickname: $nickname, ')
+          ..write('vehicleColor: $vehicleColor, ')
           ..write('vin: $vin, ')
           ..write('plateNumber: $plateNumber, ')
           ..write('currentOdometerKm: $currentOdometerKm, ')
@@ -5168,6 +5222,7 @@ typedef $$VehicleProfilesTableCreateCompanionBuilder =
       Value<String?> drivetrain,
       Value<int?> year,
       Value<String?> nickname,
+      Value<String?> vehicleColor,
       Value<String?> vin,
       Value<String?> plateNumber,
       Value<int> currentOdometerKm,
@@ -5185,6 +5240,7 @@ typedef $$VehicleProfilesTableUpdateCompanionBuilder =
       Value<String?> drivetrain,
       Value<int?> year,
       Value<String?> nickname,
+      Value<String?> vehicleColor,
       Value<String?> vin,
       Value<String?> plateNumber,
       Value<int> currentOdometerKm,
@@ -5324,6 +5380,11 @@ class $$VehicleProfilesTableFilterComposer
 
   ColumnFilters<String> get nickname => $composableBuilder(
     column: $table.nickname,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get vehicleColor => $composableBuilder(
+    column: $table.vehicleColor,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -5486,6 +5547,11 @@ class $$VehicleProfilesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get vehicleColor => $composableBuilder(
+    column: $table.vehicleColor,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get vin => $composableBuilder(
     column: $table.vin,
     builder: (column) => ColumnOrderings(column),
@@ -5613,6 +5679,11 @@ class $$VehicleProfilesTableAnnotationComposer
 
   GeneratedColumn<String> get nickname =>
       $composableBuilder(column: $table.nickname, builder: (column) => column);
+
+  GeneratedColumn<String> get vehicleColor => $composableBuilder(
+    column: $table.vehicleColor,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<String> get vin =>
       $composableBuilder(column: $table.vin, builder: (column) => column);
@@ -5777,6 +5848,7 @@ class $$VehicleProfilesTableTableManager
                 Value<String?> drivetrain = const Value.absent(),
                 Value<int?> year = const Value.absent(),
                 Value<String?> nickname = const Value.absent(),
+                Value<String?> vehicleColor = const Value.absent(),
                 Value<String?> vin = const Value.absent(),
                 Value<String?> plateNumber = const Value.absent(),
                 Value<int> currentOdometerKm = const Value.absent(),
@@ -5792,6 +5864,7 @@ class $$VehicleProfilesTableTableManager
                 drivetrain: drivetrain,
                 year: year,
                 nickname: nickname,
+                vehicleColor: vehicleColor,
                 vin: vin,
                 plateNumber: plateNumber,
                 currentOdometerKm: currentOdometerKm,
@@ -5809,6 +5882,7 @@ class $$VehicleProfilesTableTableManager
                 Value<String?> drivetrain = const Value.absent(),
                 Value<int?> year = const Value.absent(),
                 Value<String?> nickname = const Value.absent(),
+                Value<String?> vehicleColor = const Value.absent(),
                 Value<String?> vin = const Value.absent(),
                 Value<String?> plateNumber = const Value.absent(),
                 Value<int> currentOdometerKm = const Value.absent(),
@@ -5824,6 +5898,7 @@ class $$VehicleProfilesTableTableManager
                 drivetrain: drivetrain,
                 year: year,
                 nickname: nickname,
+                vehicleColor: vehicleColor,
                 vin: vin,
                 plateNumber: plateNumber,
                 currentOdometerKm: currentOdometerKm,

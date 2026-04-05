@@ -31,6 +31,8 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   final TextEditingController _identificationController =
       TextEditingController();
   final TextEditingController _plateNumberController = TextEditingController();
+  final TextEditingController _nicknameController = TextEditingController();
+  final TextEditingController _colorController = TextEditingController();
   String _odometerUnit = 'km';
   String? _yearErrorText;
   String? _mileageErrorText;
@@ -47,6 +49,8 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
     _mileageController.dispose();
     _identificationController.dispose();
     _plateNumberController.dispose();
+    _nicknameController.dispose();
+    _colorController.dispose();
     super.dispose();
   }
 
@@ -198,6 +202,16 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
       return;
     }
 
+    if (_currentStep == 3) {
+      setState(() {
+        if (_nicknameController.text.trim().isEmpty) {
+          _nicknameController.text = _generatedNickname;
+        }
+        _currentStep = 4;
+      });
+      return;
+    }
+
     await _finishOnboarding();
   }
 
@@ -235,6 +249,8 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
       year: year,
       currentOdometerKm: currentOdometerKm,
       odometerUnit: _odometerUnit,
+      nickname: _trimToNull(_nicknameController.text),
+      vehicleColor: _trimToNull(_colorController.text),
       vin: _trimToNull(_identificationController.text),
       plateNumber: _trimToNull(_plateNumberController.text),
     );
@@ -287,6 +303,8 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                                     _selectedModel = null;
                                     _identificationController.clear();
                                     _plateNumberController.clear();
+                                    _nicknameController.clear();
+                                    _colorController.clear();
                                   });
                                 },
                               )
@@ -339,7 +357,8 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                                   }
                                 },
                               )
-                            : _VehicleIdentificationStep(
+                            : _currentStep == 3
+                            ? _VehicleIdentificationStep(
                                 key: const ValueKey(
                                   'vehicle-identification-step',
                                 ),
@@ -355,8 +374,40 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                                 onSkip: _isSaving
                                     ? null
                                     : () {
+                                        setState(() {
+                                          if (_nicknameController.text
+                                              .trim()
+                                              .isEmpty) {
+                                            _nicknameController.text =
+                                                _generatedNickname;
+                                          }
+                                          _currentStep = 4;
+                                        });
+                                      },
+                              )
+                            : _VehiclePersonalizationStep(
+                                key: const ValueKey(
+                                  'vehicle-personalization-step',
+                                ),
+                                generatedNickname: _generatedNickname,
+                                nicknameController: _nicknameController,
+                                colorController: _colorController,
+                                onBack: () {
+                                  setState(() {
+                                    _currentStep = 3;
+                                  });
+                                },
+                                onSkip: _isSaving
+                                    ? null
+                                    : () {
                                         _finishOnboarding();
                                       },
+                                onUseGeneratedNickname: () {
+                                  setState(() {
+                                    _nicknameController.text =
+                                        _generatedNickname;
+                                  });
+                                },
                               ),
                       ),
                     ),
@@ -364,7 +415,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: List.generate(
-                        4,
+                        5,
                         (index) => AnimatedContainer(
                           duration: const Duration(milliseconds: 200),
                           margin: const EdgeInsets.symmetric(horizontal: 4),
@@ -396,7 +447,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                                     strokeWidth: 2,
                                   ),
                                 )
-                              : Text(_currentStep < 3 ? 'Next' : 'Finish'),
+                              : Text(_currentStep < 4 ? 'Next' : 'Finish'),
                         ),
                       ),
                     ),
@@ -433,6 +484,8 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
         return 'Add current details';
       case 3:
         return 'Add identification';
+      case 4:
+        return 'Personalize vehicle';
     }
 
     return 'Onboarding';
@@ -448,6 +501,8 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
         return 'Set the year, current mileage, and unit for this vehicle.';
       case 3:
         return 'Add VIN, frame number, or plate number. You can skip this step.';
+      case 4:
+        return 'Add a nickname and color. You can skip this step.';
     }
 
     return '';
@@ -503,6 +558,12 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   String? _trimToNull(String value) {
     final trimmed = value.trim();
     return trimmed.isEmpty ? null : trimmed;
+  }
+
+  String get _generatedNickname {
+    final brand = _selectedBrand?.name ?? '';
+    final model = _selectedModel?.name ?? '';
+    return '$brand $model'.trim();
   }
 }
 
@@ -784,6 +845,75 @@ class _VehicleIdentificationStep extends StatelessWidget {
           decoration: const InputDecoration(
             labelText: 'Plate number',
             hintText: 'Enter plate number',
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _VehiclePersonalizationStep extends StatelessWidget {
+  const _VehiclePersonalizationStep({
+    super.key,
+    required this.generatedNickname,
+    required this.nicknameController,
+    required this.colorController,
+    required this.onBack,
+    required this.onSkip,
+    required this.onUseGeneratedNickname,
+  });
+
+  final String generatedNickname;
+  final TextEditingController nicknameController;
+  final TextEditingController colorController;
+  final VoidCallback onBack;
+  final VoidCallback? onSkip;
+  final VoidCallback onUseGeneratedNickname;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            TextButton.icon(
+              onPressed: onBack,
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.textPrimary,
+                padding: EdgeInsets.zero,
+              ),
+              icon: const Icon(Icons.arrow_back),
+              label: const Text('Back'),
+            ),
+            TextButton(onPressed: onSkip, child: const Text('Skip')),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        TextField(
+          controller: nicknameController,
+          decoration: const InputDecoration(
+            labelText: 'Nickname',
+            hintText: 'My car, Work bike',
+          ),
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: OutlinedButton.icon(
+            onPressed: generatedNickname.isEmpty
+                ? null
+                : onUseGeneratedNickname,
+            icon: const Icon(Icons.auto_awesome),
+            label: Text('Use "$generatedNickname"'),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.lg),
+        TextField(
+          controller: colorController,
+          decoration: const InputDecoration(
+            labelText: 'Color',
+            hintText: 'White, Black, Blue',
           ),
         ),
       ],

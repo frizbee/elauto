@@ -55,6 +55,13 @@ class DashboardScreen extends StatelessWidget {
                             '${vehicle.vehicleBrand.name} ${vehicle.vehicleModel.name}',
                             style: Theme.of(context).textTheme.headlineSmall,
                           ),
+                          if ((vehicle.profile.nickname ?? '').isNotEmpty) ...[
+                            const SizedBox(height: AppSpacing.xs),
+                            Text(
+                              vehicle.profile.nickname!,
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                          ],
                           const SizedBox(height: AppSpacing.md),
                           Text(
                             'Year: ${vehicle.profile.year ?? '-'}',
@@ -65,6 +72,14 @@ class DashboardScreen extends StatelessWidget {
                             'Mileage: ${_formatMileage(vehicle.profile.currentOdometerKm, vehicle.profile.odometerUnit)}',
                             style: Theme.of(context).textTheme.bodyMedium,
                           ),
+                          if ((vehicle.profile.vehicleColor ?? '')
+                              .isNotEmpty) ...[
+                            const SizedBox(height: AppSpacing.xs),
+                            Text(
+                              'Color: ${vehicle.profile.vehicleColor}',
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                          ],
                           if ((vehicle.profile.vin ?? '').isNotEmpty) ...[
                             const SizedBox(height: AppSpacing.xs),
                             Text(

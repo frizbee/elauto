@@ -30,7 +30,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -76,6 +76,10 @@ class AppDatabase extends _$AppDatabase {
 
       if (from < 5) {
         await migrator.addColumn(vehicleProfiles, vehicleProfiles.plateNumber);
+      }
+
+      if (from < 6) {
+        await migrator.addColumn(vehicleProfiles, vehicleProfiles.vehicleColor);
       }
     },
   );
@@ -168,6 +172,8 @@ class AppDatabase extends _$AppDatabase {
     required int year,
     required int currentOdometerKm,
     required String odometerUnit,
+    String? nickname,
+    String? vehicleColor,
     String? vin,
     String? plateNumber,
   }) {
@@ -177,6 +183,8 @@ class AppDatabase extends _$AppDatabase {
         vehicleBrandId: vehicleBrandId,
         vehicleModelId: vehicleModelId,
         year: Value(year),
+        nickname: Value(nickname),
+        vehicleColor: Value(vehicleColor),
         vin: Value(vin),
         plateNumber: Value(plateNumber),
         currentOdometerKm: Value(currentOdometerKm),
