@@ -105,3 +105,5 @@ When generating the first version of the app, prefer this order:
 ## Notes
 - This file captures the current product intent and should guide future AI-generated code.
 - If requirements change, update this file first so future agents stay aligned.
+
+For UI styles use UIKIT.md and BRAND.md

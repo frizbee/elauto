@@ -7,6 +7,7 @@ class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key, required this.database});
 
   final AppDatabase database;
+  static const int _notificationCount = 3;
 
   @override
   Widget build(BuildContext context) {
@@ -30,9 +31,16 @@ class DashboardScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Dashboard',
-                    style: Theme.of(context).textTheme.headlineMedium,
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'Dashboard',
+                          style: Theme.of(context).textTheme.headlineMedium,
+                        ),
+                      ),
+                      _NotificationsButton(count: _notificationCount),
+                    ],
                   ),
                   const SizedBox(height: AppSpacing.lg),
                   Card(
@@ -189,6 +197,73 @@ class DashboardScreen extends StatelessWidget {
     }
 
     return 'Pink';
+  }
+}
+
+class _NotificationsButton extends StatelessWidget {
+  const _NotificationsButton({required this.count});
+
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    final badgeLabel = count > 99 ? '99+' : '$count';
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(AppRadius.md),
+      onTap: () {},
+      child: Ink(
+        width: 28,
+        height: 28,
+        decoration: BoxDecoration(
+          // color: AppColors.card,
+          // borderRadius: BorderRadius.circular(AppRadius.md),
+          // border: Border.all(color: AppColors.border),
+          boxShadow: AppShadows.soft,
+        ),
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            const Center(
+              child: Icon(
+                Icons.notifications_none_rounded,
+                color: AppColors.textPrimary,
+                size: 24,
+              ),
+            ),
+            if (count > 0)
+              Positioned(
+                top: -4,
+                right: -4,
+                child: Container(
+                  constraints: const BoxConstraints(
+                    minWidth: 20,
+                    minHeight: 20,
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.accent,
+                    borderRadius: BorderRadius.circular(AppRadius.full),
+                    // border: Border.all(color: AppColors.card, width: 2),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    badgeLabel,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      height: 1,
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
